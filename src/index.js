@@ -1,11 +1,12 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import { port } from './config/config.js';
 import categoryRoute from './routes/categoryRoute.js';
 import projectRoute from './routes/projectRoute.js';
 import apiKey from './middleware/apiKey.js';
 
-dotenv.config();
 const app = express();
 app.use(express.json());
 
