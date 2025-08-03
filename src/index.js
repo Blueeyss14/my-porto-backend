@@ -1,9 +1,23 @@
 import express from "express";
+import dotenv from "dotenv";
+import { port } from './config/config.js';
+import categoryRoute from './routes/categoryRoute.js';
+import projectRoute from './routes/projectRoute.js';
+import apiKey from './middleware/apiKey.js';
 
+dotenv.config();
 const app = express();
+app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+app.use(apiKey);
 
-app.listen(PORT, () => {
-    console.log(`jalan di port ${PORT}`);
+app.use('/projects', projectRoute);
+app.use('/categories', categoryRoute);
+
+app.get('/', (_, res) => {
+    res.status(200).send({message : 'My Portfolio'});
+});
+
+app.listen(port, '0.0.0.0', () => {
+    console.log(`jalan di port ${port}`);
 });

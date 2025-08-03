@@ -1,4 +1,4 @@
-import { apiKey as validKey } from "../config/config";
+import { apiKey as validKey } from "../config/config.js";
 
 /** 
  * @param {import('express').Request} req 

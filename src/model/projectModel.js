@@ -131,10 +131,10 @@ const removeProject = async (id) => {
     }
 };
 
-export {
-    getAllProjects,
-    getProjectById,
-    uploadProject,
-    updateProject,
-    removeProject
+export default {
+  getAllProjects,
+  getProjectById,
+  uploadProject,
+  updateProject,
+  removeProject
 };

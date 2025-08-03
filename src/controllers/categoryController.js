@@ -1,8 +1,8 @@
-import category from '../model/categoryModel';
+import category from '../model/categoryModel.js';
 
-export const getCategories = async (_, res) => {
+export const getAllCategories = async (_, res) => {
     try {
-        const categories = await category.p;
+        const categories = await category.getAllCategories();
         res.json(categories);
     } catch (err) {
         res.status(500).json({ error: err.message });
