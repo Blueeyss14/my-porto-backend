@@ -14,10 +14,14 @@ const getAllProjects = async () => {
     const [rows] = await pool.query(`
         SELECT 
             p.id AS project_id, p.title, p.description,
-            c.name AS category, pi.image_url
+            c.name AS category, pi.image_url, p.pinned_at
         FROM projects p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN project_images pi ON pi.project_id = p.id
+        ORDER BY 
+            p.pinned_at IS NOT NULL DESC,
+            p.pinned_at DESC,
+            p.id DESC
     `);
 
     if (rows.length === 0) return { msg: "No Item Here" };
@@ -31,6 +35,7 @@ const getAllProjects = async () => {
                 title: row.title,
                 description: row.description,
                 category: row.category || "",
+                is_pinned: !!row.pinned_at,
                 image_url: []
             };
         }
@@ -46,7 +51,7 @@ const getProjectById = async (id) => {
     const [rows] = await pool.query(`
         SELECT 
             p.id AS project_id, p.title, p.description,
-            c.name AS category, pi.image_url
+            c.name AS category, pi.image_url, p.pinned_at
         FROM projects p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN project_images pi ON pi.project_id = p.id
@@ -60,6 +65,7 @@ const getProjectById = async (id) => {
         title: rows[0].title,
         description: rows[0].description,
         category: rows[0].category || "",
+        is_pinned: !!rows[0].pinned_at,
         image_url: []
     };
 
@@ -72,9 +78,8 @@ const getProjectById = async (id) => {
     return project;
 };
 
-
 const uploadProject = async (body) => {
-    const { title, description, category, image_urls } = body;
+    const { title, description, category, image_urls, is_pinned } = body;
 
     const conn = await pool.getConnection();
     try {
@@ -90,10 +95,11 @@ const uploadProject = async (body) => {
         }
 
         const categoryId = catRows[0].id;
+        const pinnedAt = is_pinned ? new Date() : null;
 
         const [result] = await conn.query(
-            'INSERT INTO projects (title, description, category_id) VALUES (?, ?, ?)',
-            [title, description, categoryId]
+            'INSERT INTO projects (title, description, category_id, pinned_at) VALUES (?, ?, ?, ?)',
+            [title, description, categoryId, pinnedAt]
         );
         const projectId = result.insertId;
 
@@ -106,7 +112,7 @@ const uploadProject = async (body) => {
         }
 
         await conn.commit();
-        return { id: projectId, title, description, category, image_urls };
+        return { id: projectId, title, description, category, is_pinned, image_urls };
     } catch (err) {
         await conn.rollback();
         throw err;
@@ -115,15 +121,16 @@ const uploadProject = async (body) => {
     }
 };
 
-
 const updateProject = async (id, body) => {
-    const { title, description, category_id } = body;
+    const { title, description, category_id, is_pinned } = body;
+    const pinnedAt = is_pinned ? new Date() : null;
+
     const [result] = await pool.query(
-        'UPDATE projects SET title = ?, description = ?, category_id = ? WHERE id = ?',
-        [title, description, category_id, id]
+        'UPDATE projects SET title = ?, description = ?, category_id = ?, pinned_at = ? WHERE id = ?',
+        [title, description, category_id, pinnedAt, id]
     );
     if (result.affectedRows === 0) return null;
-    return { id, title, description, category_id };
+    return { id, title, description, category_id, is_pinned };
 };
 
 const removeProject = async (id) => {
