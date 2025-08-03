@@ -3,7 +3,10 @@ import projectModel from '../model/projectModel.js';
 export const getAllProjects = async (_, res) => {
   try {
     const projects = await projectModel.getAllProjects();
-    res.json(projects);
+    if (!projects || projects.length === 0) {
+      return res.status(200).json({ msg: "No projects found", data: [] });
+    }
+    res.json({ data: projects });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

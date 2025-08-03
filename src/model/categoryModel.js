@@ -21,10 +21,24 @@ const createCategory = async (name) => {
 };
 
 const deleteCategory = async (categoryId) => {
-    const [result] = await pool.query('DELETE FROM categories WHERE id = ?', [categoryId]);
-    return result.affectedRows > 0;
-};
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
 
+        //category_id di projects jadi null
+        await conn.query('UPDATE projects SET category_id = NULL WHERE category_id = ?', [categoryId]);
+
+        const [result] = await conn.query('DELETE FROM categories WHERE id = ?', [categoryId]);
+
+        await conn.commit();
+        return result.affectedRows > 0;
+    } catch (err) {
+        await conn.rollback();
+        throw err;
+    } finally {
+        conn.release();
+    }
+};
 
 export default {
     getAllCategories,

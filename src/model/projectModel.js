@@ -16,7 +16,7 @@ const getAllProjects = async () => {
             p.id AS project_id, p.title, p.description,
             c.name AS category, pi.image_url
         FROM projects p
-        JOIN categories c ON p.category_id = c.id
+        LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN project_images pi ON pi.project_id = p.id
     `);
 
@@ -30,7 +30,7 @@ const getAllProjects = async () => {
                 id,
                 title: row.title,
                 description: row.description,
-                category: row.category,
+                category: row.category || "",
                 image_url: []
             };
         }
@@ -48,7 +48,7 @@ const getProjectById = async (id) => {
             p.id AS project_id, p.title, p.description,
             c.name AS category, pi.image_url
         FROM projects p
-        JOIN categories c ON p.category_id = c.id
+        LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN project_images pi ON pi.project_id = p.id
         WHERE p.id = ?
     `, [id]);
@@ -59,7 +59,7 @@ const getProjectById = async (id) => {
         id: rows[0].project_id,
         title: rows[0].title,
         description: rows[0].description,
-        category: rows[0].category,
+        category: rows[0].category || "",
         image_url: []
     };
 
@@ -72,16 +72,28 @@ const getProjectById = async (id) => {
     return project;
 };
 
+
 const uploadProject = async (body) => {
-    const { title, description, category_id, image_urls } = body;
+    const { title, description, category, image_urls } = body;
 
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
 
+        const [catRows] = await conn.query(
+            'SELECT id FROM categories WHERE name = ?',
+            [category]
+        );
+
+        if (catRows.length === 0) {
+            throw new Error('Category not found.');
+        }
+
+        const categoryId = catRows[0].id;
+
         const [result] = await conn.query(
             'INSERT INTO projects (title, description, category_id) VALUES (?, ?, ?)',
-            [title, description, category_id]
+            [title, description, categoryId]
         );
         const projectId = result.insertId;
 
@@ -94,7 +106,7 @@ const uploadProject = async (body) => {
         }
 
         await conn.commit();
-        return { id: projectId, title, description, category_id };
+        return { id: projectId, title, description, category, image_urls };
     } catch (err) {
         await conn.rollback();
         throw err;
@@ -102,6 +114,7 @@ const uploadProject = async (body) => {
         conn.release();
     }
 };
+
 
 const updateProject = async (id, body) => {
     const { title, description, category_id } = body;
