@@ -24,8 +24,15 @@ export const getProjectById = async (req, res) => {
 
 export const createProject = async (req, res) => {
   try {
-    const project = await projectModel.uploadProject(req.body);
-    if (!project) return res.status(400).json({ error: "Failed to create item" });
+    const { title, description, category, is_pinned } = req.body;
+    const image_url = req.files.map(f => `uploads/${f.filename}`);
+    const project = await projectModel.uploadProject({
+      title,
+      description,
+      category,
+      image_url,
+      is_pinned: is_pinned === 'true'
+    });
     res.status(201).json(project);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -34,7 +41,15 @@ export const createProject = async (req, res) => {
 
 export const updateProject = async (req, res) => {
   try {
-    const project = await projectModel.updateProject(req.params.id, req.body);
+    const { title, description, category_id, is_pinned } = req.body;
+    const image_url = req.files.map(f => `uploads/${f.filename}`);
+    const project = await projectModel.updateProject(req.params.id, {
+      title,
+      description,
+      category_id,
+      is_pinned: is_pinned === 'true',
+      image_url
+    });
     if (!project) return res.status(404).json({ error: "Item not Found" });
     res.json(project);
   } catch (err) {

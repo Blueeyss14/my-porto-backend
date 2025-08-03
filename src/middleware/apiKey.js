@@ -7,7 +7,8 @@ import { apiKey as validKey } from "../config/config.js";
  */
 
 export default (req, res, next) => {
-    const apiKey = req.headers['authorization'];
+    const apiKey = req.query.api_key;
+    // const apiKey = req.headers['authorization'];
     if (apiKey !== validKey) {
         return res.status(401).json({ error: 'Invalid Api Key' });
     }

@@ -79,7 +79,7 @@ const getProjectById = async (id) => {
 };
 
 const uploadProject = async (body) => {
-    const { title, description, category, image_urls, is_pinned } = body;
+    const { title, description, category, image_url, is_pinned } = body;
 
     const conn = await pool.getConnection();
     try {
@@ -103,8 +103,8 @@ const uploadProject = async (body) => {
         );
         const projectId = result.insertId;
 
-        if (Array.isArray(image_urls) && image_urls.length > 0) {
-            const imgValues = image_urls.map(url => [projectId, url]);
+        if (Array.isArray(image_url) && image_url.length > 0) {
+            const imgValues = image_url.map(url => [projectId, url]);
             await conn.query(
                 'INSERT INTO project_images (project_id, image_url) VALUES ?',
                 [imgValues]
@@ -112,7 +112,7 @@ const uploadProject = async (body) => {
         }
 
         await conn.commit();
-        return { id: projectId, title, description, category, is_pinned, image_urls };
+        return { id: projectId, title, description, category, is_pinned, image_url };
     } catch (err) {
         await conn.rollback();
         throw err;
