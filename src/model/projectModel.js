@@ -122,16 +122,45 @@ const uploadProject = async (body) => {
 };
 
 const updateProject = async (id, body) => {
-    const { title, description, category_id, is_pinned } = body;
+    const { title, description, category_id, is_pinned, image_url } = body;
     const pinnedAt = is_pinned ? new Date() : null;
 
-    const [result] = await pool.query(
-        'UPDATE projects SET title = ?, description = ?, category_id = ?, pinned_at = ? WHERE id = ?',
-        [title, description, category_id, pinnedAt, id]
-    );
-    if (result.affectedRows === 0) return null;
-    return { id, title, description, category_id, is_pinned };
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        //update project data
+        const [result] = await conn.query(
+            'UPDATE projects SET title = ?, description = ?, category_id = ?, pinned_at = ? WHERE id = ?',
+            [title, description, category_id, pinnedAt, id]
+        );
+        if (result.affectedRows === 0) {
+            await conn.rollback();
+            return null;
+        }
+
+        //delete old image
+        await conn.query('DELETE FROM project_images WHERE project_id = ?', [id]);
+
+        //new image
+        if (Array.isArray(image_url) && image_url.length > 0) {
+            const imgValues = image_url.map(url => [id, url]);
+            await conn.query(
+                'INSERT INTO project_images (project_id, image_url) VALUES ?',
+                [imgValues]
+            );
+        }
+
+        await conn.commit();
+        return { id, title, description, category_id, is_pinned, image_url };
+    } catch (err) {
+        await conn.rollback();
+        throw err;
+    } finally {
+        conn.release();
+    }
 };
+
 
 const removeProject = async (id) => {
     const conn = await pool.getConnection();
