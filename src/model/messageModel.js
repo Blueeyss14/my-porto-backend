@@ -10,7 +10,7 @@ const pool = mysql.createPool({
     connectionLimit: 10,
 });
 
-const getAllCategories = async () => {
+const getAllMessages = async () => {
     const [rows] = await pool.query('SELECT * FROM chat');
     return rows;
 };
@@ -34,8 +34,8 @@ const deleteMessage = async (id) => {
 };
 
 export default {
-  getAllCategories,
-  createMessage,
+  getAllMessages,
+  getAllMessages,
   updateMessage,
   deleteMessage
 };
