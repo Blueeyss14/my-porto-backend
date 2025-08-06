@@ -35,7 +35,7 @@ const deleteMessage = async (id) => {
 
 export default {
   getAllMessages,
-  getAllMessages,
+  createMessage,
   updateMessage,
   deleteMessage
 };
