@@ -7,6 +7,7 @@ import { port } from './config/config.js';
 import categoryRoute from './routes/categoryRoute.js';
 import projectRoute from './routes/projectRoute.js';
 import messageRoute from './routes/messageRoute.js'
+import mediaBackgroundRoute from './routes/mediaBackgroundRoute.js'
 import apiKey from './middleware/apiKey.js';
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 app.use(apiKey);
 
+app.use('/mediaBackground', mediaBackgroundRoute);
 app.use('/uploads', express.static('uploads'));
 app.use('/projects', projectRoute);
 app.use('/categories', categoryRoute);

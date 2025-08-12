@@ -33,9 +33,12 @@ export const getMediaById = async (req, res) => {
     const media = await mediaModel.getMediaById(id);
     if (!media) return res.status(404).json({ error: 'File not found' });
 
-    res.setHeader('Content-Type', media.mimetype);
-    res.setHeader('Content-Disposition', `attachment; filename="${media.filename}"`);
-    res.send(media.data);
+ res.writeHead(200, {
+  'Content-Type': media.mimetype,
+  'Content-Length': media.data.length,
+});
+res.end(media.data);
+
   } catch {
     res.status(500).json({ error: 'Server error' });
   }
