@@ -71,12 +71,13 @@ export const createMedia = async (req, res) => {
   }
 };
 
-
-
 export const getAllMedia = async (_, res) => {
   try {
     const mediaList = await mediaModel.getAllMedia();
-    res.json(mediaList);
+    if (!mediaList || mediaList.length === 0) {
+      return res.status(200).json({ msg: "No categories found", data: [] });
+    }
+    res.json({data: mediaList});
   } catch {
     res.status(500).json({ error: 'Server error' });
   }
