@@ -13,8 +13,8 @@ const router = express.Router();
 router.get('/', getAllMedia);
 router.get('/:id', getMediaById);
 
-router.post('/', uploadBackground.single('file'), createMedia);
-router.put('/:id', uploadBackground.single('file'), updateMedia);
+router.post('/', uploadBackground.single('mediaBackground'), createMedia);
+router.put('/:id', uploadBackground.single('mediaBackground'), updateMedia);
 router.delete('/:id', deleteMedia);
 
 export default router;
