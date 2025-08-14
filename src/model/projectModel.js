@@ -14,7 +14,7 @@ const getAllProjects = async () => {
     const [rows] = await pool.query(`
         SELECT 
             p.id AS project_id, p.title, p.description,
-            c.name AS category, pi.image_url, p.pinned_at
+            c.name AS category, pi.image_url, p.pinned_at, p.tags
         FROM projects p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN project_images pi ON pi.project_id = p.id
@@ -36,7 +36,8 @@ const getAllProjects = async () => {
                 description: row.description,
                 category: row.category || "",
                 is_pinned: !!row.pinned_at,
-                image_url: []
+                image_url: [],
+                tags: row.tags ? JSON.parse(row.tags) : [] // parse tags
             };
         }
         if (row.image_url) {
@@ -51,7 +52,7 @@ const getProjectById = async (id) => {
     const [rows] = await pool.query(`
         SELECT 
             p.id AS project_id, p.title, p.description,
-            c.name AS category, pi.image_url, p.pinned_at
+            c.name AS category, pi.image_url, p.pinned_at, p.tags
         FROM projects p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN project_images pi ON pi.project_id = p.id
@@ -66,7 +67,8 @@ const getProjectById = async (id) => {
         description: rows[0].description,
         category: rows[0].category || "",
         is_pinned: !!rows[0].pinned_at,
-        image_url: []
+        image_url: [],
+        tags: rows[0].tags ? JSON.parse(rows[0].tags) : []
     };
 
     rows.forEach(row => {
@@ -79,7 +81,7 @@ const getProjectById = async (id) => {
 };
 
 const uploadProject = async (body) => {
-    const { title, description, category, image_url, is_pinned } = body;
+    const { title, description, category, image_url, is_pinned, tags } = body;
 
     const conn = await pool.getConnection();
     try {
@@ -98,8 +100,8 @@ const uploadProject = async (body) => {
         const pinnedAt = is_pinned ? new Date() : null;
 
         const [result] = await conn.query(
-            'INSERT INTO projects (title, description, category_id, pinned_at) VALUES (?, ?, ?, ?)',
-            [title, description, categoryId, pinnedAt]
+            'INSERT INTO projects (title, description, category_id, pinned_at, tags) VALUES (?, ?, ?, ?, ?)',
+            [title, description, categoryId, pinnedAt, JSON.stringify(tags || [])]
         );
         const projectId = result.insertId;
 
@@ -112,7 +114,7 @@ const uploadProject = async (body) => {
         }
 
         await conn.commit();
-        return { id: projectId, title, description, category, is_pinned, image_url };
+        return { id: projectId, title, description, category, is_pinned, image_url, tags: tags || [] };
     } catch (err) {
         await conn.rollback();
         throw err;
@@ -122,27 +124,35 @@ const uploadProject = async (body) => {
 };
 
 const updateProject = async (id, body) => {
-    const { title, description, category_id, is_pinned, image_url } = body;
+    const { title, description, category, is_pinned, image_url, tags } = body;
     const pinnedAt = is_pinned ? new Date() : null;
 
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
 
-        //update project data
+        const [catRows] = await conn.query(
+            'SELECT id FROM categories WHERE name = ?',
+            [category]
+        );
+        if (catRows.length === 0) {
+            throw new Error('Category not found.');
+        }
+        const categoryId = catRows[0].id;
+
         const [result] = await conn.query(
-            'UPDATE projects SET title = ?, description = ?, category_id = ?, pinned_at = ? WHERE id = ?',
-            [title, description, category_id, pinnedAt, id]
+            'UPDATE projects SET title = ?, description = ?, category_id = ?, pinned_at = ?, tags = ? WHERE id = ?',
+            [title, description, categoryId, pinnedAt, JSON.stringify(tags || []), id]
         );
         if (result.affectedRows === 0) {
             await conn.rollback();
             return null;
         }
 
-        //delete old image
+        // delete old image
         await conn.query('DELETE FROM project_images WHERE project_id = ?', [id]);
 
-        //new image
+        // insert new image
         if (Array.isArray(image_url) && image_url.length > 0) {
             const imgValues = image_url.map(url => [id, url]);
             await conn.query(
@@ -152,7 +162,7 @@ const updateProject = async (id, body) => {
         }
 
         await conn.commit();
-        return { id, title, description, category_id, is_pinned, image_url };
+        return { id, title, description, category, is_pinned, image_url, tags: tags || [] };
     } catch (err) {
         await conn.rollback();
         throw err;
