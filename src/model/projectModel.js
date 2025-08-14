@@ -10,74 +10,84 @@ const pool = mysql.createPool({
     connectionLimit: 10,
 });
 
+const safeParseTags = (tags) => {
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags;
+  try {
+    return JSON.parse(tags);
+  } catch {
+    return tags.split(',').map(t => t.trim());
+  }
+};
+
 const getAllProjects = async () => {
-    const [rows] = await pool.query(`
-        SELECT 
-            p.id AS project_id, p.title, p.description,
-            c.name AS category, pi.image_url, p.pinned_at, p.tags
-        FROM projects p
-        LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN project_images pi ON pi.project_id = p.id
-        ORDER BY 
-            p.pinned_at IS NOT NULL DESC,
-            p.pinned_at DESC,
-            p.id DESC
-    `);
+  const [rows] = await pool.query(`
+    SELECT 
+      p.id AS project_id, p.title, p.description,
+      c.name AS category, pi.image_url, p.pinned_at, p.tags
+    FROM projects p
+    LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN project_images pi ON pi.project_id = p.id
+    ORDER BY 
+      p.pinned_at IS NOT NULL DESC,
+      p.pinned_at DESC,
+      p.id DESC
+  `);
 
-    if (rows.length === 0) return { msg: "No Item Here" };
+  if (rows.length === 0) return { msg: "No Item Here" };
 
-    const map = {};
-    rows.forEach(row => {
-        const id = row.project_id;
-        if (!map[id]) {
-            map[id] = {
-                id,
-                title: row.title,
-                description: row.description,
-                category: row.category || "",
-                is_pinned: !!row.pinned_at,
-                image_url: [],
-                tags: row.tags ? JSON.parse(row.tags) : [] // parse tags
-            };
-        }
-        if (row.image_url) {
-            map[id].image_url.push({ url: row.image_url });
-        }
-    });
+  const map = {};
+  rows.forEach(row => {
+    const id = row.project_id;
+    if (!map[id]) {
+      map[id] = {
+        id,
+        title: row.title,
+        description: row.description,
+        category: row.category || "",
+        is_pinned: !!row.pinned_at,
+        image_url: [],
+        tags: safeParseTags(row.tags)
+      };
+    }
+    if (row.image_url) {
+      map[id].image_url.push({ url: row.image_url });
+    }
+  });
 
-    return Object.values(map);
+  return Object.values(map);
 };
 
 const getProjectById = async (id) => {
-    const [rows] = await pool.query(`
-        SELECT 
-            p.id AS project_id, p.title, p.description,
-            c.name AS category, pi.image_url, p.pinned_at, p.tags
-        FROM projects p
-        LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN project_images pi ON pi.project_id = p.id
-        WHERE p.id = ?
-    `, [id]);
+  const [rows] = await pool.query(`
+    SELECT 
+      p.id AS project_id, p.title, p.description,
+      c.name AS category, pi.image_url, p.pinned_at, p.tags
+    FROM projects p
+    LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN project_images pi ON pi.project_id = p.id
+    WHERE p.id = ?
+  `, [id]);
 
-    if (rows.length === 0) return null;
+  if (rows.length === 0) return null;
 
-    const project = {
-        id: rows[0].project_id,
-        title: rows[0].title,
-        description: rows[0].description,
-        category: rows[0].category || "",
-        is_pinned: !!rows[0].pinned_at,
-        image_url: [],
-        tags: rows[0].tags ? JSON.parse(rows[0].tags) : []
-    };
+  const project = {
+    id: rows[0].project_id,
+    title: rows[0].title,
+    description: rows[0].description,
+    category: rows[0].category || "",
+    is_pinned: !!rows[0].pinned_at,
+    image_url: [],
+    tags: safeParseTags(rows[0].tags)
+  };
 
-    rows.forEach(row => {
-        if (row.image_url) {
-            project.image_url.push({ url: row.image_url });
-        }
-    });
+  rows.forEach(row => {
+    if (row.image_url) {
+      project.image_url.push({ url: row.image_url });
+    }
+  });
 
-    return project;
+  return project;
 };
 
 const uploadProject = async (body) => {
