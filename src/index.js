@@ -14,10 +14,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/mediaBackground', mediaBackgroundRoute);
+app.use('/uploads', express.static('uploads'));
 
 app.use(apiKey);
 
-app.use('/uploads', express.static('uploads'));
 app.use('/projects', projectRoute);
 app.use('/categories', categoryRoute);
 app.use('/messages', messageRoute);
