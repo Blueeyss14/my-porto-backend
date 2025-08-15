@@ -25,15 +25,19 @@ export const getProjectById = async (req, res) => {
 export const createProject = async (req, res) => {
   try {
     const { title, description, category, is_pinned, tags } = req.body;
-    const image_url = req.files.map(f => `uploads/${f.filename}`);
+    const image_url = req.files['image_url']?.map(f => `uploads/${f.filename}`) || [];
+    const thumbnail = req.files['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : null;
+
     const project = await projectModel.uploadProject({
       title,
       description,
       category,
       image_url,
       is_pinned: is_pinned === 'true',
-       tags: tags ? JSON.parse(tags) : []
+      tags: tags ? JSON.parse(tags) : [],
+      thumbnail
     });
+
     res.status(201).json(project);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -43,21 +47,26 @@ export const createProject = async (req, res) => {
 export const updateProject = async (req, res) => {
   try {
     const { title, description, category, is_pinned, tags } = req.body;
-    const image_url = req.files.map(f => `uploads/${f.filename}`);
+    const image_url = req.files['image_url']?.map(f => `uploads/${f.filename}`) || [];
+    const thumbnail = req.files['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : null;
+
     const project = await projectModel.updateProject(req.params.id, {
       title,
       description,
       category,
       is_pinned: is_pinned === 'true',
       image_url,
-       tags: tags ? JSON.parse(tags) : []
+      tags: tags ? JSON.parse(tags) : [],
+      thumbnail
     });
+
     if (!project) return res.status(404).json({ error: "Item not Found" });
     res.json(project);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 export const deleteProject = async (req, res) => {

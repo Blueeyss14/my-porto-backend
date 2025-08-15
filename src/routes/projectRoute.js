@@ -13,8 +13,24 @@ const router = express.Router();
 router.get('/', getAllProjects);
 router.get('/:id', getProjectById);
 
-router.post('/', upload.array('image_url', 10), createProject);
-router.put('/:id', upload.array('image_url', 10), updateProject);
+router.post(
+  '/',
+  upload.fields([
+    { name: 'image_url', maxCount: 10 },
+    { name: 'thumbnail', maxCount: 1 }
+  ]),
+  createProject
+);
+
+router.put(
+  '/:id',
+  upload.fields([
+    { name: 'image_url', maxCount: 10 },
+    { name: 'thumbnail', maxCount: 1 }
+  ]),
+  updateProject
+);
+
 router.delete('/:id', deleteProject);
 
 export default router;
