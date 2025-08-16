@@ -16,7 +16,7 @@ router.get('/:id', getProjectById);
 router.post(
   '/',
   upload.fields([
-    { name: 'image_url', maxCount: 10 },
+    { name: 'image_url'},
     { name: 'thumbnail', maxCount: 1 }
   ]),
   createProject
@@ -25,7 +25,7 @@ router.post(
 router.put(
   '/:id',
   upload.fields([
-    { name: 'image_url', maxCount: 10 },
+    { name: 'image_url'},
     { name: 'thumbnail', maxCount: 1 }
   ]),
   updateProject
