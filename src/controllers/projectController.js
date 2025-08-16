@@ -24,12 +24,13 @@ export const getProjectById = async (req, res) => {
 
 export const createProject = async (req, res) => {
   try {
-    const { title, description, category, is_pinned, tags, contributing, resources } = req.body;
+    const { title, subtitle, description, category, is_pinned, tags, contributing, resources } = req.body;
     const image_url = req.files['image_url']?.map(f => `uploads/${f.filename}`) || [];
     const thumbnail = req.files['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : null;
 
     const project = await projectModel.uploadProject({
       title,
+      subtitle: subtitle || null,
       description,
       category,
       image_url,
@@ -49,12 +50,13 @@ export const createProject = async (req, res) => {
 
 export const updateProject = async (req, res) => {
   try {
-    const { title, description, category, is_pinned, tags, contributing, resources } = req.body;
+    const { title, subtitle, description, category, is_pinned, tags, contributing, resources } = req.body;
     const image_url = req.files['image_url']?.map(f => `uploads/${f.filename}`) || [];
     const thumbnail = req.files['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : null;
 
     const project = await projectModel.updateProject(req.params.id, {
       title,
+      subtitle: subtitle || null,
       description,
       category,
       is_pinned: is_pinned === 'true',

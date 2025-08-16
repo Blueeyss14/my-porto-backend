@@ -23,7 +23,7 @@ const safeParseTags = (tags) => {
 const getAllProjects = async () => {
   const [rows] = await pool.query(`
     SELECT 
-      p.id AS project_id, p.title, p.description,
+      p.id AS project_id, p.title, p.subtitle, p.description,
       c.name AS category, pi.image_url, p.pinned_at, p.tags, p.thumbnail,
       p.contributing, p.resources
     FROM projects p
@@ -44,6 +44,7 @@ const getAllProjects = async () => {
       map[id] = {
         id,
         title: row.title,
+        subtitle: row.subtitle,
         description: row.description,
         category: row.category || "",
         is_pinned: !!row.pinned_at,
@@ -64,7 +65,7 @@ const getAllProjects = async () => {
 const getProjectById = async (id) => {
   const [rows] = await pool.query(`
     SELECT 
-      p.id AS project_id, p.title, p.description,
+      p.id AS project_id, p.title, p.subtitle, p.description,
       c.name AS category, pi.image_url, p.pinned_at, p.tags, p.thumbnail,
       p.contributing, p.resources
     FROM projects p
@@ -78,6 +79,7 @@ const getProjectById = async (id) => {
   const project = {
     id: rows[0].project_id,
     title: rows[0].title,
+    subtitle: rows[0].subtitle,
     description: rows[0].description,
     category: rows[0].category || "",
     is_pinned: !!rows[0].pinned_at,
@@ -99,7 +101,7 @@ const getProjectById = async (id) => {
 
 
 const uploadProject = async (body) => {
-  const { title, description, category, image_url, is_pinned, tags, thumbnail, contributing, resources } = body;
+  const { title, subtitle, description, category, image_url, is_pinned, tags, thumbnail, contributing, resources } = body;
 
   const conn = await pool.getConnection();
   try {
@@ -119,10 +121,11 @@ const uploadProject = async (body) => {
 
     const [result] = await conn.query(
       `INSERT INTO projects 
-        (title, description, category_id, pinned_at, tags, thumbnail, contributing, resources) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        (title, subtitle, description, category_id, pinned_at, tags, thumbnail, contributing, resources) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title,
+        subtitle || null,
         description,
         categoryId,
         pinnedAt,
@@ -147,6 +150,7 @@ const uploadProject = async (body) => {
     return { 
       id: projectId, 
       title, 
+      subtitle: subtitle || null,
       description, 
       category, 
       is_pinned, 
@@ -168,6 +172,7 @@ const uploadProject = async (body) => {
 const updateProject = async (id, body) => {
   const { 
     title, 
+    subtitle,
     description, 
     category, 
     is_pinned, 
@@ -195,11 +200,12 @@ const updateProject = async (id, body) => {
 
     const [result] = await conn.query(
       `UPDATE projects 
-       SET title = ?, description = ?, category_id = ?, pinned_at = ?, 
+       SET title = ?, subtitle = ?, description = ?, category_id = ?, pinned_at = ?, 
            tags = ?, thumbnail = ?, contributing = ?, resources = ? 
        WHERE id = ?`,
       [
         title,
+        subtitle || null,
         description,
         categoryId,
         pinnedAt,
@@ -216,10 +222,10 @@ const updateProject = async (id, body) => {
       return null;
     }
 
-    // delete old image
+    //delete old image
     await conn.query('DELETE FROM project_images WHERE project_id = ?', [id]);
 
-    // insert new image
+    //insert new image
     if (Array.isArray(image_url) && image_url.length > 0) {
       const imgValues = image_url.map(url => [id, url]);
       await conn.query(
@@ -232,6 +238,7 @@ const updateProject = async (id, body) => {
     return { 
       id, 
       title, 
+      subtitle: subtitle || null,
       description, 
       category, 
       is_pinned, 
@@ -248,6 +255,7 @@ const updateProject = async (id, body) => {
     conn.release();
   }
 };
+
 
 const removeProject = async (id) => {
     const conn = await pool.getConnection();
