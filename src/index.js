@@ -9,6 +9,7 @@ import projectRoute from './routes/projectRoute.js';
 import messageRoute from './routes/messageRoute.js'
 import mediaBackgroundRoute from './routes/mediaBackgroundRoute.js'
 import apiKey from './middleware/apiKey.js';
+import musicRoute from './routes/musicRouter.js';
 
 const app = express();
 app.use(cors());
@@ -21,6 +22,7 @@ app.use(apiKey);
 app.use('/projects', projectRoute);
 app.use('/categories', categoryRoute);
 app.use('/messages', messageRoute);
+app.use('/music', musicRoute);
 
 app.get('/', (_, res) => {
     res.status(200).send({message : 'My Portfolio'});
