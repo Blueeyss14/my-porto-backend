@@ -13,9 +13,21 @@
 
 ## Messages
 - GET.../messages/
-- .../messages/id
+- PUT/DELETE.../messages/id
 
 ### field
 - id
 - "user_name"
 - "message"
+
+---
+
+## Music
+- GET.../music/
+- PUT/DELETE.../music/id
+- ...uploads/music/song_file
+
+### field
+- id
+- "song_name"
+- "song_file"
