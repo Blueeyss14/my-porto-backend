@@ -1,10 +1,10 @@
-## Background ['data']
+## Background
 
 - GET.../mediaBackground/
 - PUT/DELETE.../mediaBackground/id
 - .../mediaBackground/id
 
-### field
+### field ['data']
 - id
 - "filename"
 - "mimetype" (auto fill)
@@ -42,3 +42,47 @@
 ### field ['data']
 - id
 - "name"
+
+---
+
+## Project
+- GET.../projects/
+- GET.../projects/id
+- PUT/DELETE.../projects/id
+- .../projects/
+- .../uploads/image_url
+
+### field ['data']
+- id
+- "title"
+- "subtitle"
+- "description"
+- "category"
+- "is_pinned"
+- "image_url" : [
+                    {"url" : ""},
+                    {"url" " ""},
+                ]
+
+- "tags" : 
+            [
+                "",
+                "",
+            ]
+
+- "thumbnail"
+- "contributing" : 
+                    [
+                        {
+                            "name" : "",
+                            "link" : ""
+                        }
+                    ]
+
+- "resources" : 
+                [
+                    {
+                        "name" : "",
+                        "link" : ""
+                    }
+                ]
