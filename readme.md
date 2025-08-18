@@ -22,7 +22,7 @@
 
 ---
 
-## Music ['data']
+## Music
 - GET.../music/
 - PUT/DELETE.../music/id
 - ...uploads/music/song_file
