@@ -1,4 +1,4 @@
-## Background
+## Background ['data']
 
 - GET.../mediaBackground/
 - PUT/DELETE.../mediaBackground/id
@@ -11,7 +11,7 @@
 
 ---
 
-## Messages
+## Messages ['data']
 - GET.../messages/
 - PUT/DELETE.../messages/id
 
@@ -22,12 +22,23 @@
 
 ---
 
-## Music
+## Music ['data']
 - GET.../music/
 - PUT/DELETE.../music/id
 - ...uploads/music/song_file
 
-### field
+### field ['data']
 - id
 - "song_name"
 - "song_file"
+
+---
+
+## Category
+- GET.../categories/
+- DELETE.../categories/
+- .../categories/
+
+### field ['data']
+- id
+- "name"
