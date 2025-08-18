@@ -11,11 +11,11 @@
 
 ---
 
-## Messages ['data']
+## Messages
 - GET.../messages/
 - PUT/DELETE.../messages/id
 
-### field
+### field ['data']
 - id
 - "user_name"
 - "message"
