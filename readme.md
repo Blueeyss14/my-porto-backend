@@ -61,7 +61,7 @@
 - "is_pinned"
 - "image_url" : [
                     {"url" : ""},
-                    {"url" " ""},
+                    {"url" : ""},
                 ]
 
 - "tags" : 
