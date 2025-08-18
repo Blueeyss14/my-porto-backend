@@ -1,6 +1,6 @@
 # Background
 
-- http://localhost:3000/mediaBackground/id
+- .../mediaBackground/id
 ## field
 - id
 - filename
