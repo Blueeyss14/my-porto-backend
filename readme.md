@@ -1,6 +1,7 @@
 ## Background
 
-- .../mediaBackground/
+- GET.../mediaBackground/
+- PUT/DELETE.../mediaBackground/id
 - .../mediaBackground/id
 
 ### field
@@ -11,7 +12,7 @@
 ---
 
 ## Messages
-- .../messages/
+- GET.../messages/
 - .../messages/id
 
 ### field
