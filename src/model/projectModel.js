@@ -168,86 +168,77 @@ const uploadProject = async (body) => {
   }
 };
 
-
-const updateProject = async (id, body) => {
-  const { 
-    title, 
-    subtitle,
-    description, 
-    category, 
-    is_pinned, 
-    image_url, 
-    tags, 
-    thumbnail,
-    contributing,
-    resources
-  } = body;
-
-  const pinnedAt = is_pinned ? new Date() : null;
-
+const patchProject = async (id, body) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
-    const [catRows] = await conn.query(
-      'SELECT id FROM categories WHERE name = ?',
-      [category]
-    );
-    if (catRows.length === 0) {
-      throw new Error('Category not found.');
+    const fields = [];
+    const values = [];
+
+    if (body.title !== undefined) {
+      fields.push("title = ?");
+      values.push(body.title);
     }
-    const categoryId = catRows[0].id;
-
-    const [result] = await conn.query(
-      `UPDATE projects 
-       SET title = ?, subtitle = ?, description = ?, category_id = ?, pinned_at = ?, 
-           tags = ?, thumbnail = ?, contributing = ?, resources = ? 
-       WHERE id = ?`,
-      [
-        title,
-        subtitle || null,
-        description,
-        categoryId,
-        pinnedAt,
-        JSON.stringify(tags || []),
-        thumbnail || null,
-        JSON.stringify(contributing || []),
-        JSON.stringify(resources || []),
-        id
-      ]
-    );
-
-    if (result.affectedRows === 0) {
-      await conn.rollback();
-      return null;
+    if (body.subtitle !== undefined) {
+      fields.push("subtitle = ?");
+      values.push(body.subtitle);
+    }
+    if (body.description !== undefined) {
+      fields.push("description = ?");
+      values.push(body.description);
+    }
+    if (body.category !== undefined) {
+      const [catRows] = await conn.query(
+        'SELECT id FROM categories WHERE name = ?',
+        [body.category]
+      );
+      if (catRows.length === 0) throw new Error('Category not found.');
+      fields.push("category_id = ?");
+      values.push(catRows[0].id);
+    }
+    if (body.is_pinned !== undefined) {
+      fields.push("pinned_at = ?");
+      values.push(body.is_pinned ? new Date() : null);
+    }
+    if (body.tags !== undefined) {
+      fields.push("tags = ?");
+      values.push(JSON.stringify(body.tags));
+    }
+    if (body.thumbnail !== undefined) {
+      fields.push("thumbnail = ?");
+      values.push(body.thumbnail);
+    }
+    if (body.contributing !== undefined) {
+      fields.push("contributing = ?");
+      values.push(JSON.stringify(body.contributing));
+    }
+    if (body.resources !== undefined) {
+      fields.push("resources = ?");
+      values.push(JSON.stringify(body.resources));
     }
 
-    //delete old image
-    await conn.query('DELETE FROM project_images WHERE project_id = ?', [id]);
-
-    //insert new image
-    if (Array.isArray(image_url) && image_url.length > 0) {
-      const imgValues = image_url.map(url => [id, url]);
+    if (fields.length > 0) {
+      values.push(id);
       await conn.query(
-        'INSERT INTO project_images (project_id, image_url) VALUES ?',
-        [imgValues]
+        `UPDATE projects SET ${fields.join(", ")} WHERE id = ?`,
+        values
       );
     }
 
+    if (body.image_url !== undefined) {
+      await conn.query('DELETE FROM project_images WHERE project_id = ?', [id]);
+      if (Array.isArray(body.image_url) && body.image_url.length > 0) {
+        const imgValues = body.image_url.map(url => [id, url]);
+        await conn.query(
+          'INSERT INTO project_images (project_id, image_url) VALUES ?',
+          [imgValues]
+        );
+      }
+    }
+
     await conn.commit();
-    return { 
-      id, 
-      title, 
-      subtitle: subtitle || null,
-      description, 
-      category, 
-      is_pinned, 
-      image_url, 
-      tags: tags || [], 
-      thumbnail: thumbnail || null,
-      contributing: contributing || [],
-      resources: resources || []
-    };
+    return await getProjectById(id);
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -255,6 +246,94 @@ const updateProject = async (id, body) => {
     conn.release();
   }
 };
+
+
+// const updateProject = async (id, body) => {
+//   const { 
+//     title, 
+//     subtitle,
+//     description, 
+//     category, 
+//     is_pinned, 
+//     image_url, 
+//     tags, 
+//     thumbnail,
+//     contributing,
+//     resources
+//   } = body;
+
+//   const pinnedAt = is_pinned ? new Date() : null;
+
+//   const conn = await pool.getConnection();
+//   try {
+//     await conn.beginTransaction();
+
+//     const [catRows] = await conn.query(
+//       'SELECT id FROM categories WHERE name = ?',
+//       [category]
+//     );
+//     if (catRows.length === 0) {
+//       throw new Error('Category not found.');
+//     }
+//     const categoryId = catRows[0].id;
+
+//     const [result] = await conn.query(
+//       `UPDATE projects 
+//        SET title = ?, subtitle = ?, description = ?, category_id = ?, pinned_at = ?, 
+//            tags = ?, thumbnail = ?, contributing = ?, resources = ? 
+//        WHERE id = ?`,
+//       [
+//         title,
+//         subtitle || null,
+//         description,
+//         categoryId,
+//         pinnedAt,
+//         JSON.stringify(tags || []),
+//         thumbnail || null,
+//         JSON.stringify(contributing || []),
+//         JSON.stringify(resources || []),
+//         id
+//       ]
+//     );
+
+//     if (result.affectedRows === 0) {
+//       await conn.rollback();
+//       return null;
+//     }
+
+//     //delete old image
+//     await conn.query('DELETE FROM project_images WHERE project_id = ?', [id]);
+
+//     //insert new image
+//     if (Array.isArray(image_url) && image_url.length > 0) {
+//       const imgValues = image_url.map(url => [id, url]);
+//       await conn.query(
+//         'INSERT INTO project_images (project_id, image_url) VALUES ?',
+//         [imgValues]
+//       );
+//     }
+
+//     await conn.commit();
+//     return { 
+//       id, 
+//       title, 
+//       subtitle: subtitle || null,
+//       description, 
+//       category, 
+//       is_pinned, 
+//       image_url, 
+//       tags: tags || [], 
+//       thumbnail: thumbnail || null,
+//       contributing: contributing || [],
+//       resources: resources || []
+//     };
+//   } catch (err) {
+//     await conn.rollback();
+//     throw err;
+//   } finally {
+//     conn.release();
+//   }
+// };
 
 
 const removeProject = async (id) => {
@@ -279,6 +358,7 @@ export default {
   getAllProjects,
   getProjectById,
   uploadProject,
-  updateProject,
+  patchProject,
+  // updateProject,
   removeProject
 };

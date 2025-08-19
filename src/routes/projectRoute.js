@@ -4,7 +4,7 @@ import {
   getAllProjects,
   getProjectById,
   createProject,
-  updateProject,
+  patchProject,
   deleteProject
 } from '../controllers/projectController.js';
 
@@ -16,19 +16,19 @@ router.get('/:id', getProjectById);
 router.post(
   '/',
   upload.fields([
-    { name: 'image_url'},
+    { name: 'image_url' },
     { name: 'thumbnail', maxCount: 1 }
   ]),
   createProject
 );
 
-router.put(
+router.patch(
   '/:id',
   upload.fields([
-    { name: 'image_url'},
+    { name: 'image_url' },
     { name: 'thumbnail', maxCount: 1 }
   ]),
-  updateProject
+  patchProject
 );
 
 router.delete('/:id', deleteProject);
