@@ -226,6 +226,19 @@ const patchProject = async (id, body) => {
       );
     }
 
+    if (body.delete_index !== undefined) {
+      const [images] = await conn.query(
+        'SELECT id FROM project_images WHERE project_id = ? ORDER BY id ASC',
+        [id]
+      );
+      if (body.delete_index >= 0 && body.delete_index < images.length) {
+        await conn.query(
+          'DELETE FROM project_images WHERE id = ?',
+          [images[body.delete_index].id]
+        );
+      }
+    }
+
     if (body.image_url !== undefined) {
       const [images] = await conn.query(
         'SELECT id FROM project_images WHERE project_id = ? ORDER BY id ASC',
