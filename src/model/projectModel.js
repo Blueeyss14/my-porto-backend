@@ -55,7 +55,7 @@ const getAllProjects = async () => {
         resources: safeParseTags(row.resources)    
       };
     }
-    if (row.image_url) map[id].image_url.push({ url: row.image_url });
+    if (row.image_url) map[id].image_url.push(row.image_url);
   });
 
   return Object.values(map);
@@ -92,7 +92,7 @@ const getProjectById = async (id) => {
 
   rows.forEach(row => {
     if (row.image_url) {
-      project.image_url.push({ url: row.image_url });
+      project.image_url.push(row.image_url);
     }
   });
 
@@ -227,13 +227,42 @@ const patchProject = async (id, body) => {
     }
 
     if (body.image_url !== undefined) {
-      await conn.query('DELETE FROM project_images WHERE project_id = ?', [id]);
-      if (Array.isArray(body.image_url) && body.image_url.length > 0) {
-        const imgValues = body.image_url.map(url => [id, url]);
-        await conn.query(
-          'INSERT INTO project_images (project_id, image_url) VALUES ?',
-          [imgValues]
-        );
+      const [images] = await conn.query(
+        'SELECT id FROM project_images WHERE project_id = ? ORDER BY id ASC',
+        [id]
+      );
+
+      if (body.image_index !== undefined) {
+        if (body.image_index >= 0 && body.image_index < images.length) {
+          await conn.query(
+            'UPDATE project_images SET image_url = ? WHERE id = ?',
+            [body.image_url[0], images[body.image_index].id]
+          );
+        }
+      } else if (body.delete_index !== undefined) {
+        if (body.delete_index >= 0 && body.delete_index < images.length) {
+          await conn.query(
+            'DELETE FROM project_images WHERE id = ?',
+            [images[body.delete_index].id]
+          );
+        }
+      } else if (body.add_images) {
+        if (body.image_url.length > 0) {
+          const imgValues = body.image_url.map(url => [id, url]);
+          await conn.query(
+            'INSERT INTO project_images (project_id, image_url) VALUES ?',
+            [imgValues]
+          );
+        }
+      } else {
+        await conn.query('DELETE FROM project_images WHERE project_id = ?', [id]);
+        if (body.image_url.length > 0) {
+          const imgValues = body.image_url.map(url => [id, url]);
+          await conn.query(
+            'INSERT INTO project_images (project_id, image_url) VALUES ?',
+            [imgValues]
+          );
+        }
       }
     }
 

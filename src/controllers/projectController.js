@@ -49,8 +49,21 @@ export const createProject = async (req, res) => {
 
 export const patchProject = async (req, res) => {
   try {
-    const { title, subtitle, description, category, is_pinned, tags, contributing, resources } = req.body;
+    const { 
+      title, 
+      subtitle, 
+      description, 
+      category, 
+      is_pinned, 
+      tags, 
+      contributing, 
+      resources 
+    } = req.body;
+    
     const image_url = req.files?.['image_url']?.map(f => `uploads/${f.filename}`) || undefined;
+    const image_index = req.body.image_index ? parseInt(req.body.image_index) : undefined;
+    const delete_index = req.body.delete_index ? parseInt(req.body.delete_index) : undefined;
+    const add_images = req.body.add_images === 'true';
     const thumbnail = req.files?.['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : undefined;
 
     const project = await projectModel.patchProject(req.params.id, {
@@ -60,6 +73,9 @@ export const patchProject = async (req, res) => {
       ...(category !== undefined && { category }),
       ...(is_pinned !== undefined && { is_pinned: is_pinned === 'true' }),
       ...(image_url !== undefined && { image_url }),
+      ...(image_index !== undefined && { image_index }),
+      ...(delete_index !== undefined && { delete_index }),
+      ...(add_images && { add_images }),
       ...(tags !== undefined && { tags: JSON.parse(tags) }),
       ...(thumbnail !== undefined && { thumbnail }),
       ...(contributing !== undefined && { contributing }),
