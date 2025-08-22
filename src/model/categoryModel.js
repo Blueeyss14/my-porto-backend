@@ -7,7 +7,7 @@ const pool = mysql.createPool({
     password: db.password,
     database: db.database,
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 5,
 });
 
 const getAllCategories = async () => {
