@@ -7,7 +7,10 @@ const pool = mysql.createPool({
     password: db.password,
     database: db.database,
     waitForConnections: true,
-    connectionLimit: 2,
+    connectionLimit: 1,
+    acquireTimeout: 60000,
+    timeout: 30000,
+    idleTimeout: 300000 
 });
 
 const safeParseTags = (tags) => {
