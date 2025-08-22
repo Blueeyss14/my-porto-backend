@@ -18,7 +18,7 @@ app.use('/mediaBackground', mediaBackgroundRoute);
 app.use('/uploads', express.static('uploads'));
 // app.use('/uploads', express.static('/tmp/uploads'));
 
-app.use(apiKey);
+// app.use(apiKey);
 
 app.use('/projects', projectRoute);
 app.use('/categories', categoryRoute);
