@@ -62,13 +62,11 @@ export const patchProject = async (req, res) => {
       resources 
     } = req.body;
     
-    // const image_url = req.files?.['image_url']?.map(f => `uploads/${f.filename}`) || undefined;
-    const image_url = req.files?.['image_url']?.map(f => f.filename) || undefined;
+    const imageFiles = req.files?.['image_url'] || undefined;
     const image_index = req.body.image_index ? parseInt(req.body.image_index) : undefined;
     const delete_index = req.body.delete_index ? parseInt(req.body.delete_index) : undefined;
     const add_images = req.body.add_images === 'true';
-    // const thumbnail = req.files?.['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : undefined;
-    const thumbnail = req.files?.['thumbnail'] ? req.files['thumbnail'][0].filename : undefined;
+    const thumbnailFile = req.files?.['thumbnail']?.[0] || undefined;
 
     const project = await projectModel.patchProject(req.params.id, {
       ...(title !== undefined && { title }),
@@ -76,12 +74,12 @@ export const patchProject = async (req, res) => {
       ...(description !== undefined && { description }),
       ...(category !== undefined && { category }),
       ...(is_pinned !== undefined && { is_pinned: is_pinned === 'true' }),
-      ...(image_url !== undefined && { image_url }),
+      ...(imageFiles !== undefined && { imageFiles }),
       ...(image_index !== undefined && { image_index }),
       ...(delete_index !== undefined && { delete_index }),
       ...(add_images && { add_images }),
       ...(tags !== undefined && { tags: JSON.parse(tags) }),
-      ...(thumbnail !== undefined && { thumbnail }),
+      ...(thumbnailFile !== undefined && { thumbnailFile }),
       ...(contributing !== undefined && { contributing }),
       ...(resources !== undefined && { resources })
     });

@@ -27,7 +27,8 @@ const getAllProjects = async () => {
   const [rows] = await pool.query(`
     SELECT 
       p.id AS project_id, p.title, p.subtitle, p.description,
-      c.name AS category, pi.image_url, p.pinned_at, p.tags, p.thumbnail,
+      c.name AS category, pi.filename as image_url, p.pinned_at, p.tags,
+      CASE WHEN p.thumbnail_data IS NOT NULL THEN p.thumbnail_mimetype END as thumbnail,
       p.contributing, p.resources
     FROM projects p
     LEFT JOIN categories c ON p.category_id = c.id
@@ -69,7 +70,8 @@ const getProjectById = async (id) => {
   const [rows] = await pool.query(`
     SELECT 
       p.id AS project_id, p.title, p.subtitle, p.description,
-      c.name AS category, pi.image_url, p.pinned_at, p.tags, p.thumbnail,
+      c.name AS category, pi.filename as image_url, p.pinned_at, p.tags,
+      CASE WHEN p.thumbnail_data IS NOT NULL THEN p.thumbnail_mimetype END as thumbnail,
       p.contributing, p.resources
     FROM projects p
     LEFT JOIN categories c ON p.category_id = c.id
@@ -144,19 +146,14 @@ const uploadProject = async (body) => {
     const projectId = result.insertId;
 
     if (Array.isArray(imageFiles) && imageFiles.length > 0) {
-      const imgValues = imageFiles.map(file => [
-        projectId,
-        file.originalname,
-        file.buffer,
-        file.mimetype
-      ]);
-      
-      await conn.query(
-        `INSERT INTO project_images 
-         (project_id, filename, image_data, mimetype) 
-         VALUES ?`,
-        [imgValues]
-      );
+      for (const file of imageFiles) {
+        await conn.query(
+          `INSERT INTO project_images 
+           (project_id, filename, image_data, mimetype) 
+           VALUES (?, ?, ?, ?)`,
+          [projectId, file.originalname, file.buffer, file.mimetype]
+        );
+      }
     }
 
     await conn.commit();
@@ -219,9 +216,9 @@ const patchProject = async (id, body) => {
       fields.push("tags = ?");
       values.push(JSON.stringify(body.tags));
     }
-    if (body.thumbnail !== undefined) {
-      fields.push("thumbnail = ?");
-      values.push(body.thumbnail);
+    if (body.thumbnailFile !== undefined) {
+      fields.push("thumbnail_data = ?, thumbnail_mimetype = ?");
+      values.push(body.thumbnailFile.buffer, body.thumbnailFile.mimetype);
     }
     if (body.contributing !== undefined) {
       fields.push("contributing = ?");
@@ -253,7 +250,7 @@ const patchProject = async (id, body) => {
       }
     }
 
-    if (body.image_url !== undefined) {
+    if (body.imageFiles !== undefined) {
       const [images] = await conn.query(
         'SELECT id FROM project_images WHERE project_id = ? ORDER BY id ASC',
         [id]
@@ -261,9 +258,10 @@ const patchProject = async (id, body) => {
 
       if (body.image_index !== undefined) {
         if (body.image_index >= 0 && body.image_index < images.length) {
+          const file = body.imageFiles[0];
           await conn.query(
-            'UPDATE project_images SET image_url = ? WHERE id = ?',
-            [body.image_url[0], images[body.image_index].id]
+            'UPDATE project_images SET filename = ?, image_data = ?, mimetype = ? WHERE id = ?',
+            [file.originalname, file.buffer, file.mimetype, images[body.image_index].id]
           );
         }
       } else if (body.delete_index !== undefined) {
@@ -274,19 +272,29 @@ const patchProject = async (id, body) => {
           );
         }
       } else if (body.add_images) {
-        if (body.image_url.length > 0) {
-          const imgValues = body.image_url.map(url => [id, url]);
+        if (body.imageFiles.length > 0) {
+          const imgValues = body.imageFiles.map(file => [
+            id,
+            file.originalname,
+            file.buffer,
+            file.mimetype
+          ]);
           await conn.query(
-            'INSERT INTO project_images (project_id, image_url) VALUES ?',
+            'INSERT INTO project_images (project_id, filename, image_data, mimetype) VALUES ?',
             [imgValues]
           );
         }
       } else {
         await conn.query('DELETE FROM project_images WHERE project_id = ?', [id]);
-        if (body.image_url.length > 0) {
-          const imgValues = body.image_url.map(url => [id, url]);
+        if (body.imageFiles.length > 0) {
+          const imgValues = body.imageFiles.map(file => [
+            id,
+            file.originalname,
+            file.buffer,
+            file.mimetype
+          ]);
           await conn.query(
-            'INSERT INTO project_images (project_id, image_url) VALUES ?',
+            'INSERT INTO project_images (project_id, filename, image_data, mimetype) VALUES ?',
             [imgValues]
           );
         }

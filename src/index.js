@@ -15,16 +15,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static('./'));  
+// app.use(express.static('./'));  
 app.use('/mediaBackground', mediaBackgroundRoute);
 // app.use('/uploads', express.static('uploads'));
-
-// app.use(apiKey);
-
 app.use('/projects', projectRoute);
+app.use('/music', musicRoute);
+
+app.use(apiKey);
+
 app.use('/categories', categoryRoute);
 app.use('/messages', messageRoute);
-app.use('/music', musicRoute);
 
 app.get('/', (_, res) => {
     res.status(200).send({message : 'My Portfolio'});
