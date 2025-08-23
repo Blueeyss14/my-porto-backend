@@ -11,9 +11,6 @@
         "src": "/(.*)",
         "dest": "src/index.js"
       }
-    ],
-    "env": {
-      "DB_CONNECTION_LIMIT": "1"
-    }
+    ]
   }
   
