@@ -50,7 +50,8 @@
 - GET.../projects/id
 - PUT/DELETE.../projects/id
 - .../projects/
-- .../uploads/image_url
+- .../projects/project/id/image/index
+- .../projects/project/id/thumbnail
 
 ### field ['data']
 - id
@@ -60,8 +61,8 @@
 - "category"
 - "is_pinned"
 - "image_url" : [
-                    {"url" : ""},
-                    {"url" : ""},
+                    "",
+                    "",
                 ]
 
 - "tags" : 
