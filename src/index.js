@@ -16,7 +16,6 @@ app.use(cors());
 app.use(express.json());
 app.use('/mediaBackground', mediaBackgroundRoute);
 app.use('/uploads', express.static('uploads'));
-// app.use('/uploads', express.static('/tmp/uploads'));
 
 // app.use(apiKey);
 
