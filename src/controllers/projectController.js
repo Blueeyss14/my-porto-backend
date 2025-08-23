@@ -25,8 +25,10 @@ export const getProjectById = async (req, res) => {
 export const createProject = async (req, res) => {
   try {
     const { title, subtitle, description, category, is_pinned, tags, contributing, resources } = req.body;
-    const image_url = req.files['image_url']?.map(f => `uploads/${f.filename}`) || [];
-    const thumbnail = req.files['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : null;
+    // const image_url = req.files['image_url']?.map(f => `uploads/${f.filename}`) || [];
+    const image_url = req.files['image_url']?.map(f => f.filename) || [];
+    const thumbnail = req.files['thumbnail'] ? req.files['thumbnail'][0].filename : null;
+    // const thumbnail = req.files['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : null;
 
     const project = await projectModel.uploadProject({
       title,
@@ -60,11 +62,13 @@ export const patchProject = async (req, res) => {
       resources 
     } = req.body;
     
-    const image_url = req.files?.['image_url']?.map(f => `uploads/${f.filename}`) || undefined;
+    // const image_url = req.files?.['image_url']?.map(f => `uploads/${f.filename}`) || undefined;
+    const image_url = req.files?.['image_url']?.map(f => f.filename) || undefined;
     const image_index = req.body.image_index ? parseInt(req.body.image_index) : undefined;
     const delete_index = req.body.delete_index ? parseInt(req.body.delete_index) : undefined;
     const add_images = req.body.add_images === 'true';
-    const thumbnail = req.files?.['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : undefined;
+    // const thumbnail = req.files?.['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : undefined;
+    const thumbnail = req.files?.['thumbnail'] ? req.files['thumbnail'][0].filename : undefined;
 
     const project = await projectModel.patchProject(req.params.id, {
       ...(title !== undefined && { title }),

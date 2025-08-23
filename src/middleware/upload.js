@@ -19,22 +19,34 @@
 
 // export default upload;
 
-import multer from "multer";
-import fs from "fs";
-
-const uploadPath = "/tmp/uploads";
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
-}
+import multer from 'multer';
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadPath),
+  destination: (req, file, cb) => cb(null, './'),
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "_" + file.originalname;
+    const uniqueName = Date.now() + '_' + file.originalname;
     cb(null, uniqueName);
-  },
+  }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 200 * 1024 * 1024 },
+  fileFilter: (_, file, cb) => {
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/gif',
+      'image/webp'
+    ];
+    
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+    }
+  },
+});
 
 export default upload;
