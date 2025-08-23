@@ -104,7 +104,7 @@ const getProjectById = async (id) => {
 
 
 const uploadProject = async (body) => {
-  const { title, subtitle, description, category, image_url, is_pinned, tags, thumbnail, contributing, resources } = body;
+  const { title, subtitle, description, category, imageFiles, is_pinned, tags, thumbnailFile, contributing, resources } = body;
 
   const conn = await pool.getConnection();
   try {
@@ -124,8 +124,9 @@ const uploadProject = async (body) => {
 
     const [result] = await conn.query(
       `INSERT INTO projects 
-        (title, subtitle, description, category_id, pinned_at, tags, thumbnail, contributing, resources) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (title, subtitle, description, category_id, pinned_at, tags, 
+         thumbnail_data, thumbnail_mimetype, contributing, resources) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title,
         subtitle || null,
@@ -133,7 +134,8 @@ const uploadProject = async (body) => {
         categoryId,
         pinnedAt,
         JSON.stringify(tags || []),
-        thumbnail || null,
+        thumbnailFile ? thumbnailFile.buffer : null,
+        thumbnailFile ? thumbnailFile.mimetype : null,
         JSON.stringify(contributing || []), 
         JSON.stringify(resources || [])   
       ]
@@ -141,15 +143,24 @@ const uploadProject = async (body) => {
 
     const projectId = result.insertId;
 
-    if (Array.isArray(image_url) && image_url.length > 0) {
-      const imgValues = image_url.map(url => [projectId, url]);
+    if (Array.isArray(imageFiles) && imageFiles.length > 0) {
+      const imgValues = imageFiles.map(file => [
+        projectId,
+        file.originalname,
+        file.buffer,
+        file.mimetype
+      ]);
+      
       await conn.query(
-        'INSERT INTO project_images (project_id, image_url) VALUES ?',
+        `INSERT INTO project_images 
+         (project_id, filename, image_data, mimetype) 
+         VALUES ?`,
         [imgValues]
       );
     }
 
     await conn.commit();
+
     return { 
       id: projectId, 
       title, 
@@ -157,9 +168,9 @@ const uploadProject = async (body) => {
       description, 
       category, 
       is_pinned, 
-      image_url, 
+      image_url: imageFiles.map(f => f.originalname), 
       tags: tags || [], 
-      thumbnail: thumbnail || null,
+      thumbnail: thumbnailFile ? thumbnailFile.originalname : null,
       contributing: contributing || [],
       resources: resources || []
     };
@@ -399,11 +410,42 @@ const removeProject = async (id) => {
     }
 };
 
+const getImageByProjectIdAndIndex = async (projectId, imageIndex) => {
+  const [rows] = await pool.query(
+    `SELECT pi.image_url, pi.image_data, pi.mimetype 
+     FROM project_images pi
+     WHERE pi.project_id = ? 
+     ORDER BY pi.id ASC 
+     LIMIT 1 OFFSET ?`,
+    [projectId, imageIndex]
+  );
+  
+  if (!rows[0]) return null;
+  
+  if (!rows[0].image_data) {
+    return {
+      image_data: Buffer.from(rows[0].image_url),
+      mimetype: 'image/png'
+    };
+  }
+  
+  return rows[0];
+};
+
+const getThumbnailById = async (id) => {
+  const [rows] = await pool.query(
+    'SELECT thumbnail_data, thumbnail_mimetype FROM projects WHERE id = ?',
+    [id]
+  );
+  return rows[0];
+};
+
 export default {
   getAllProjects,
   getProjectById,
   uploadProject,
   patchProject,
-  // updateProject,
-  removeProject
+  removeProject,
+  getImageByProjectIdAndIndex,
+  getThumbnailById
 };

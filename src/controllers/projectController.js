@@ -25,26 +25,26 @@ export const getProjectById = async (req, res) => {
 export const createProject = async (req, res) => {
   try {
     const { title, subtitle, description, category, is_pinned, tags, contributing, resources } = req.body;
-    // const image_url = req.files['image_url']?.map(f => `uploads/${f.filename}`) || [];
-    const image_url = req.files['image_url']?.map(f => f.filename) || [];
-    const thumbnail = req.files['thumbnail'] ? req.files['thumbnail'][0].filename : null;
-    // const thumbnail = req.files['thumbnail'] ? `uploads/${req.files['thumbnail'][0].filename}` : null;
+    
+    const imageFiles = req.files['image_url'] || [];
+    const thumbnailFile = req.files['thumbnail'] ? req.files['thumbnail'][0] : null;
 
     const project = await projectModel.uploadProject({
       title,
       subtitle: subtitle || null,
       description,
       category,
-      image_url,
+      imageFiles,
       is_pinned: is_pinned === 'true',
       tags: tags ? JSON.parse(tags) : [],
-      thumbnail,
+      thumbnailFile,
       contributing: contributing || null,
       resources: resources || null
     });
 
     res.status(201).json(project);
   } catch (err) {
+    console.error('Error in createProject:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -124,6 +124,56 @@ export const deleteProject = async (req, res) => {
     const success = await projectModel.removeProject(req.params.id);
     if (!success) return res.status(404).json({ error: "Item not Found" });
     res.json({ msg: "Item deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getImageById = async (req, res) => {
+  try {
+    const { projectId, imageIndex } = req.params;
+    const image = await projectModel.getImageByProjectIdAndIndex(parseInt(projectId), parseInt(imageIndex));
+    if (!image) return res.status(404).json({ error: "Image not found" });
+
+    if (!image.image_data && image.image_url) {
+      try {
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        const filePath = path.resolve(image.image_url);
+        const fileData = await fs.readFile(filePath);
+        
+        res.writeHead(200, {
+          'Content-Type': 'image/png',
+          'Content-Length': fileData.length,
+        });
+        return res.end(fileData);
+      } catch (fsErr) {
+        console.error('Error reading file:', fsErr);
+        return res.status(404).json({ error: "Image file not found" });
+      }
+    }
+    
+    res.writeHead(200, {
+      'Content-Type': image.mimetype || 'image/png',
+      'Content-Length': image.image_data.length,
+    });
+    res.end(image.image_data);
+  } catch (err) {
+    console.error('Error in getImageById:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getThumbnailById = async (req, res) => {
+  try {
+    const thumbnail = await projectModel.getThumbnailById(req.params.id);
+    if (!thumbnail) return res.status(404).json({ error: "Thumbnail not found" });
+    
+    res.writeHead(200, {
+      'Content-Type': thumbnail.thumbnail_mimetype,
+      'Content-Length': thumbnail.thumbnail_data.length,
+    });
+    res.end(thumbnail.thumbnail_data);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -5,13 +5,17 @@ import {
   getProjectById,
   createProject,
   patchProject,
-  deleteProject
+  deleteProject,
+  getImageById,
+  getThumbnailById
 } from '../controllers/projectController.js';
 
 const router = express.Router();
 
 router.get('/', getAllProjects);
 router.get('/:id', getProjectById);
+router.get('/project/:projectId/image/:imageIndex', getImageById);
+router.get('/project/:id/thumbnail', getThumbnailById);
 
 router.post(
   '/',
