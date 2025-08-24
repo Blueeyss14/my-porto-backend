@@ -10,6 +10,7 @@ export const getAllMusic = async (_, res) => {
         const result = songs.map(song => ({
             id: song.id,
             song_name: song.song_name,
+            song_file: 'available',
             mimetype: song.mimetype
         }));
 
