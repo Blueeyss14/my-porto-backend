@@ -24,10 +24,23 @@ export const getProjectById = async (req, res) => {
 
 export const createProject = async (req, res) => {
   try {
+    console.log('=== DEBUG DULU GES ===');
+    console.log('req.body:', req.body);
+    console.log('req.files:', req.files);
+    console.log('req.files keys:', req.files ? Object.keys(req.files) : 'no files');
+    
+    if (req.files) {
+      console.log('image_url files:', req.files['image_url']);
+      console.log('thumbnail files:', req.files['thumbnail']);
+    }
+    
     const { title, subtitle, description, category, is_pinned, tags, contributing, resources } = req.body;
     
     const imageFiles = req.files['image_url'] || [];
     const thumbnailFile = req.files['thumbnail'] ? req.files['thumbnail'][0] : null;
+
+    console.log('Processed imageFiles:', imageFiles);
+    console.log('Processed thumbnailFile:', thumbnailFile);
 
     const project = await projectModel.uploadProject({
       title,
