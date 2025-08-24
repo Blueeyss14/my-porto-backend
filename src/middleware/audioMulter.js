@@ -32,7 +32,7 @@ import multer from 'multer';
 
 const storage = multer.memoryStorage();
 
-const fileFilter = (req, file, cb) => {
+const fileFilter = (_, file, cb) => {
   const allowedTypes = ['audio/mpeg', 'audio/flac', 'audio/wav', 'audio/mp4'];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);

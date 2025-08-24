@@ -8,9 +8,7 @@ const pool = mysql.createPool({
     database: db.database,
     waitForConnections: true,
     connectionLimit: 10,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: { rejectUnauthorized: false }
 });
 
 const getAllMusic = async () => {
@@ -18,31 +16,50 @@ const getAllMusic = async () => {
     return rows;
 };
 
-const createMusic = async (song_name, song_file) => {
-    const query = 'INSERT INTO music (song_name, song_file) VALUES (?, ?)';
-    const [result] = await pool.execute(query, [song_name, song_file]);
+const getMusicById = async (id) => {
+    const [rows] = await pool.query(
+        "SELECT song_file, mimetype FROM music WHERE id = ?", 
+        [id]
+    );
+    return rows.length > 0 ? rows[0] : null;
+};
+
+const createMusic = async (song_name, song_file, mimetype) => {
+    const query = 'INSERT INTO music (song_name, song_file, mimetype) VALUES (?, ?, ?)';
+    const [result] = await pool.execute(query, [song_name, song_file, mimetype]);
     return result.insertId;
 };
 
-const updateMusic = async (id, song_name, song_file) => {
-    let query = 'UPDATE music SET ';
+const updateMusic = async (id, song_name, song_file, mimetype) => {
+    const updates = [];
     const params = [];
+
     if (song_name !== null && song_name !== undefined) {
-        query += 'song_name = ?, ';
+        updates.push('song_name = ?');
         params.push(song_name);
     }
     if (song_file !== null && song_file !== undefined) {
-        query += 'song_file = ?, ';
+        updates.push('song_file = ?');
         params.push(song_file);
     }
-    query = query.slice(0, -2);
-    query += ' WHERE id = ?';
+    if (mimetype !== null && mimetype !== undefined) {
+        updates.push('mimetype = ?');
+        params.push(mimetype);
+    }
+
+    if (updates.length === 0) {
+        return 0;
+    }
+
+    const query = `UPDATE music SET ${updates.join(', ')} WHERE id = ?`;
     params.push(id);
+
+    console.log('Query:', query);
+    console.log('Params length:', params.length);
 
     const [result] = await pool.execute(query, params);
     return result.affectedRows;
 };
-
 
 const deleteMusic = async (id) => {
     const query = 'DELETE FROM music WHERE id = ?';
@@ -52,6 +69,7 @@ const deleteMusic = async (id) => {
 
 export default {
     getAllMusic,
+    getMusicById,
     createMusic,
     updateMusic,
     deleteMusic
